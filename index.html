@@ -73,6 +73,15 @@
       </nav>
 
       <div class="sidebar-footer">
+        <!-- Toggle de tema — visível no sidebar apenas em mobile -->
+        <div class="sidebar-theme-block">
+          <span class="sidebar-theme-label">Tema</span>
+          <div class="theme-toggle theme-toggle-sidebar" role="group" aria-label="Tema">
+            <button class="theme-btn" data-theme-val="dark"   aria-label="Tema escuro">🌙 Escuro</button>
+            <button class="theme-btn" data-theme-val="light"  aria-label="Tema claro">☀️ Claro</button>
+            <button class="theme-btn active" data-theme-val="system" aria-label="Seguir sistema">💻 Sistema</button>
+          </div>
+        </div>
         <span id="monthInfo">—</span>
       </div>
     </aside>
@@ -101,7 +110,7 @@
             <button class="theme-btn active" data-theme-val="system" aria-label="Seguir sistema">💻</button>
           </div>
           <button class="btn-primary" id="btnAddEntry">
-            <span aria-hidden="true">＋</span> Nova Entrada
+            <span aria-hidden="true">＋</span> <span class="btn-label">Nova Entrada</span>
           </button>
         </div>
       </header>
