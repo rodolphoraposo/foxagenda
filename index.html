@@ -1,517 +1,315 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="author"
-      content="Rapôso Web Dev - https://rodolphoraposo.vercel.app/"
-    />
-    <meta
-      name="description"
-      content="Fox's Agenda - Sua ferramenta definitiva para gestão de rotina diária. Organize suas atividades, acompanhe seu progresso e alcance seus objetivos com facilidade. Experimente agora e transforme sua rotina!"
-    />
-    <title>Fox Agenda — Gestão de Rotina Diária</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="assets/style.css" />
-    <link rel="icon" href="./assets/images/ico/logo.ico" type="image/x-icon" />
-  </head>
-  <body>
-    <!-- SIDEBAR OVERLAY (mobile) -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <div class="app" id="app">
-      <!-- ══ SIDEBAR ══ -->
-      <aside class="sidebar" id="sidebar">
-        <div class="logo">
-          <img src="./assets/images/logocompleta.png" alt="" />
-          <button
-            class="btn-close-sidebar"
-            id="btnCloseSidebar"
-            aria-label="Fechar menu"
-          >
-            ✕
-          </button>
-        </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="author" content="Rapôso Web Dev - https://rodolphoraposo.vercel.app/" />
+  <meta name="description"
+    content="Fox's Agenda - Sua ferramenta definitiva para gestão de rotina diária. Organize suas atividades, acompanhe seu progresso e alcance seus objetivos com facilidade. Experimente agora e transforme sua rotina!" />
+  <title>Fox Agenda — Gestão de Rotina Diária</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="assets/style.css" />
+  <link rel="icon" href="./assets/images/ico/logo.ico" type="image/x-icon" />
+</head>
 
-        <div class="sidebar-date">
-          <div class="today-label">Hoje</div>
-          <div class="today-value" id="sidebarDate">—</div>
-        </div>
+<body>
+  <!-- SIDEBAR OVERLAY (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-        <nav class="sidebar-nav" role="navigation">
-          <div class="nav-section-label">Visão Geral</div>
-          <button
-            class="nav-btn active"
-            data-view="dashboard"
-            aria-label="Dashboard"
-          >
-            <span class="icon" aria-hidden="true">⚡</span> Dashboard
-          </button>
-          <button
-            class="nav-btn"
-            data-view="entries"
-            aria-label="Todas as entradas"
-          >
-            <span class="icon" aria-hidden="true">📋</span> Todas as Entradas
-          </button>
-          <button class="nav-btn" data-view="calendar" aria-label="Calendário">
-            <span class="icon" aria-hidden="true">📅</span> Calendário
-          </button>
-          <button
-            class="nav-btn"
-            data-view="history"
-            aria-label="Histórico de realizações"
-          >
-            <span class="icon" aria-hidden="true">📊</span> Histórico
-          </button>
+  <div class="app" id="app">
+    <!-- ══ SIDEBAR ══ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="logo">
+        <img src="./assets/images/logocompleta.png" alt="" />
+        <button class="btn-close-sidebar" id="btnCloseSidebar" aria-label="Fechar menu">
+          ✕
+        </button>
+      </div>
 
-          <div class="nav-section-label" style="margin-top: 12px">
-            Categorias
+      <div class="sidebar-date">
+        <div class="today-label">Hoje</div>
+        <div class="today-value" id="sidebarDate">—</div>
+      </div>
+
+      <nav class="sidebar-nav" role="navigation">
+        <div class="nav-section-label">Visão Geral</div>
+        <button class="nav-btn active" data-view="dashboard" aria-label="Dashboard">
+          <span class="icon" aria-hidden="true">⚡</span> Dashboard
+        </button>
+        <button class="nav-btn" data-view="entries" aria-label="Todas as entradas">
+          <span class="icon" aria-hidden="true">📋</span> Todas as Entradas
+        </button>
+        <button class="nav-btn" data-view="calendar" aria-label="Calendário">
+          <span class="icon" aria-hidden="true">📅</span> Calendário
+        </button>
+        <button class="nav-btn" data-view="history" aria-label="Histórico de realizações">
+          <span class="icon" aria-hidden="true">📊</span> Histórico
+        </button>
+
+        <div class="nav-section-label" style="margin-top:12px">Categorias</div>
+        <button class="nav-btn" data-view="entries" data-filter="work">
+          <span class="cat-dot" style="background:var(--work)"></span> Trabalho
+        </button>
+        <button class="nav-btn" data-view="entries" data-filter="study">
+          <span class="cat-dot" style="background:var(--study)"></span> Estudo
+        </button>
+        <button class="nav-btn" data-view="entries" data-filter="reading">
+          <span class="cat-dot" style="background:var(--reading)"></span> Leitura
+        </button>
+        <button class="nav-btn" data-view="entries" data-filter="exercise">
+          <span class="cat-dot" style="background:var(--exercise)"></span> Exercício
+        </button>
+        <button class="nav-btn" data-view="entries" data-filter="rest">
+          <span class="cat-dot" style="background:var(--rest)"></span> Descanso
+        </button>
+        <button class="nav-btn" data-view="entries" data-filter="food">
+          <span class="cat-dot" style="background:var(--food)"></span> Alimentação
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <span id="monthInfo">—</span>
+      </div>
+    </aside>
+
+    <!-- ══ MAIN ══ -->
+    <main class="main" role="main">
+
+      <!-- TOPBAR -->
+      <header class="topbar" role="banner">
+        <div class="topbar-left">
+          <!-- Hamburger -->
+          <button class="btn-hamburger" id="btnHamburger" aria-label="Abrir menu" aria-expanded="false" aria-controls="sidebar">
+            <span></span><span></span><span></span>
+          </button>
+          <div>
+            <div class="topbar-title" id="viewTitle">Dashboard</div>
+            <div class="topbar-subtitle" id="viewSubtitle">Resumo da rotina de hoje</div>
           </div>
-          <button class="nav-btn" data-view="entries" data-filter="work">
-            <span class="cat-dot" style="background: var(--work)"></span>
-            Trabalho
-          </button>
-          <button class="nav-btn" data-view="entries" data-filter="study">
-            <span class="cat-dot" style="background: var(--study)"></span>
-            Estudo
-          </button>
-          <button class="nav-btn" data-view="entries" data-filter="reading">
-            <span class="cat-dot" style="background: var(--reading)"></span>
-            Leitura
-          </button>
-          <button class="nav-btn" data-view="entries" data-filter="exercise">
-            <span class="cat-dot" style="background: var(--exercise)"></span>
-            Exercício
-          </button>
-          <button class="nav-btn" data-view="entries" data-filter="rest">
-            <span class="cat-dot" style="background: var(--rest)"></span>
-            Descanso
-          </button>
-          <button class="nav-btn" data-view="entries" data-filter="food">
-            <span class="cat-dot" style="background: var(--food)"></span>
-            Alimentação
-          </button>
-        </nav>
-
-        <div class="sidebar-footer">
-          <span id="monthInfo">—</span>
         </div>
-      </aside>
 
-      <!-- ══ MAIN ══ -->
-      <main class="main" role="main">
-        <!-- TOPBAR -->
-        <header class="topbar" role="banner">
-          <div class="topbar-left">
-            <!-- Hamburger -->
-            <button
-              class="btn-hamburger"
-              id="btnHamburger"
-              aria-label="Abrir menu"
-              aria-expanded="false"
-              aria-controls="sidebar"
-            >
-              <span></span><span></span><span></span>
-            </button>
-            <div>
-              <div class="topbar-title" id="viewTitle">Dashboard</div>
-              <div class="topbar-subtitle" id="viewSubtitle">
-                Resumo da rotina de hoje
-              </div>
+        <div class="topbar-right">
+          <!-- Theme toggle -->
+          <div class="theme-toggle" id="themeToggle" role="group" aria-label="Tema">
+            <button class="theme-btn" data-theme-val="dark"   aria-label="Tema escuro">🌙</button>
+            <button class="theme-btn" data-theme-val="light"  aria-label="Tema claro">☀️</button>
+            <button class="theme-btn active" data-theme-val="system" aria-label="Seguir sistema">💻</button>
+          </div>
+          <button class="btn-primary" id="btnAddEntry">
+            <span aria-hidden="true">＋</span> Nova Entrada
+          </button>
+        </div>
+      </header>
+
+      <!-- CONTENT -->
+      <div class="content">
+
+        <!-- ── DASHBOARD VIEW ── -->
+        <section class="view active" id="view-dashboard" aria-label="Dashboard">
+          <div class="stats-grid" id="statsGrid"></div>
+          <div class="weekly-section">
+            <div class="section-title">Atividades — Últimos 7 dias</div>
+            <div class="bar-chart" id="barChart"></div>
+          </div>
+          <div class="section-title">Meta Diária por Categoria</div>
+          <div class="progress-section" id="progressSection"></div>
+        </section>
+
+        <!-- ── ENTRIES VIEW ── -->
+        <section class="view" id="view-entries" aria-label="Lista de entradas">
+          <div class="filter-bar">
+            <button class="filter-chip active" data-cat="all">Todos</button>
+            <button class="filter-chip" data-cat="work">💼 Trabalho</button>
+            <button class="filter-chip" data-cat="study">📚 Estudo</button>
+            <button class="filter-chip" data-cat="reading">📖 Leitura</button>
+            <button class="filter-chip" data-cat="exercise">🏃 Exercício</button>
+            <button class="filter-chip" data-cat="rest">😴 Descanso</button>
+            <button class="filter-chip" data-cat="food">🍽️ Alimentação</button>
+            <div class="search-box">
+              <span aria-hidden="true">🔍</span>
+              <input type="text" id="searchInput" placeholder="Pesquisar..." aria-label="Pesquisar entradas">
             </div>
           </div>
-
-          <div class="topbar-right">
-            <!-- Theme toggle -->
-            <div
-              class="theme-toggle"
-              id="themeToggle"
-              role="group"
-              aria-label="Tema"
-            >
-              <button
-                class="theme-btn"
-                data-theme-val="dark"
-                aria-label="Tema escuro"
-              >
-                🌙
-              </button>
-              <button
-                class="theme-btn"
-                data-theme-val="light"
-                aria-label="Tema claro"
-              >
-                ☀️
-              </button>
-              <button
-                class="theme-btn active"
-                data-theme-val="system"
-                aria-label="Seguir sistema"
-              >
-                💻
-              </button>
-            </div>
-            <button class="btn-primary" id="btnAddEntry">
-              <span aria-hidden="true">＋</span> Nova Entrada
-            </button>
+          <!-- Sort bar -->
+          <div class="sort-bar">
+            <label for="sortSelect" class="sort-label">Ordenar:</label>
+            <select id="sortSelect" class="sort-select">
+              <option value="date_desc">Data (mais recente)</option>
+              <option value="date_asc">Data (mais antiga)</option>
+              <option value="cat">Categoria</option>
+              <option value="status">Status</option>
+            </select>
           </div>
-        </header>
+          <div class="entries-list" id="entriesList" role="list"></div>
+        </section>
 
-        <!-- CONTENT -->
-        <div class="content">
-          <!-- ── DASHBOARD VIEW ── -->
-          <section
-            class="view active"
-            id="view-dashboard"
-            aria-label="Dashboard"
-          >
-            <div class="stats-grid" id="statsGrid"></div>
-            <div class="weekly-section">
-              <div class="section-title">Atividades — Últimos 7 dias</div>
-              <div class="bar-chart" id="barChart"></div>
+        <!-- ── CALENDAR VIEW ── -->
+        <section class="view" id="view-calendar" aria-label="Calendário">
+          <div class="calendar-header">
+            <div class="section-title" id="calTitle" style="margin-bottom:0">—</div>
+            <div class="calendar-nav">
+              <button class="btn-icon" id="calPrev" aria-label="Mês anterior">◀</button>
+              <button class="btn-icon" id="calToday" aria-label="Mês atual">Hoje</button>
+              <button class="btn-icon" id="calNext" aria-label="Próximo mês">▶</button>
             </div>
-            <div class="section-title">Meta Diária por Categoria</div>
-            <div class="progress-section" id="progressSection"></div>
-          </section>
+          </div>
+          <div class="calendar-grid" id="calendarGrid" role="grid"></div>
+        </section>
 
-          <!-- ── ENTRIES VIEW ── -->
-          <section
-            class="view"
-            id="view-entries"
-            aria-label="Lista de entradas"
-          >
-            <div class="filter-bar">
-              <button class="filter-chip active" data-cat="all">Todos</button>
-              <button class="filter-chip" data-cat="work">💼 Trabalho</button>
-              <button class="filter-chip" data-cat="study">📚 Estudo</button>
-              <button class="filter-chip" data-cat="reading">📖 Leitura</button>
-              <button class="filter-chip" data-cat="exercise">
-                🏃 Exercício
-              </button>
-              <button class="filter-chip" data-cat="rest">😴 Descanso</button>
-              <button class="filter-chip" data-cat="food">
-                🍽️ Alimentação
-              </button>
-              <div class="search-box">
-                <span aria-hidden="true">🔍</span>
-                <input
-                  type="text"
-                  id="searchInput"
-                  placeholder="Pesquisar..."
-                  aria-label="Pesquisar entradas"
-                />
-              </div>
-            </div>
-            <!-- Sort bar -->
-            <div class="sort-bar">
-              <label for="sortSelect" class="sort-label">Ordenar:</label>
-              <select id="sortSelect" class="sort-select">
-                <option value="date_desc">Data (mais recente)</option>
-                <option value="date_asc">Data (mais antiga)</option>
-                <option value="cat">Categoria</option>
-                <option value="status">Status</option>
-              </select>
-            </div>
-            <div class="entries-list" id="entriesList" role="list"></div>
-          </section>
+        <!-- ── HISTORY VIEW ── -->
+        <section class="view" id="view-history" aria-label="Histórico de realizações">
+          <div class="history-summary" id="historySummary"></div>
+          <div class="section-title" style="margin-top:24px">Registro de Realizações</div>
+          <div class="history-list" id="historyList"></div>
+        </section>
 
-          <!-- ── CALENDAR VIEW ── -->
-          <section class="view" id="view-calendar" aria-label="Calendário">
-            <div class="calendar-header">
-              <div class="section-title" id="calTitle" style="margin-bottom: 0">
-                —
-              </div>
-              <div class="calendar-nav">
-                <button class="btn-icon" id="calPrev" aria-label="Mês anterior">
-                  ◀
-                </button>
-                <button class="btn-icon" id="calToday" aria-label="Mês atual">
-                  Hoje
-                </button>
-                <button class="btn-icon" id="calNext" aria-label="Próximo mês">
-                  ▶
-                </button>
-              </div>
-            </div>
-            <div class="calendar-grid" id="calendarGrid" role="grid"></div>
-          </section>
+      </div><!-- /content -->
+    </main>
+  </div><!-- /app -->
 
-          <!-- ── HISTORY VIEW ── -->
-          <section
-            class="view"
-            id="view-history"
-            aria-label="Histórico de realizações"
-          >
-            <div class="history-summary" id="historySummary"></div>
-            <div class="section-title" style="margin-top: 24px">
-              Registro de Realizações
-            </div>
-            <div class="history-list" id="historyList"></div>
-          </section>
-        </div>
-        <!-- /content -->
-      </main>
-    </div>
-    <!-- /app -->
-
-    <!-- ══════════════════════════════════
+  <!-- ══════════════════════════════════
        MODAL: ADICIONAR / EDITAR ENTRADA
   ══════════════════════════════════ -->
-    <div
-      class="modal-overlay"
-      id="modalOverlay"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="modalTitle"
-    >
-      <div class="modal">
-        <div class="modal-header">
-          <h2 id="modalTitle">Nova Entrada</h2>
-          <button
-            class="btn-close"
-            id="btnCloseModal"
-            aria-label="Fechar modal"
-          >
-            ✕
-          </button>
+  <div class="modal-overlay" id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Nova Entrada</h2>
+        <button class="btn-close" id="btnCloseModal" aria-label="Fechar modal">✕</button>
+      </div>
+
+      <div class="form-grid">
+
+        <!-- Categoria -->
+        <div class="form-group form-full">
+          <label>Categoria <span class="req">*</span></label>
+          <div class="cat-selector" role="group" aria-label="Selecione a categoria">
+            <input type="radio" class="cat-option" name="cat" id="cat-work"     value="work">
+            <label class="cat-option-label" for="cat-work">     <span class="cat-emoji">💼</span>Trabalho</label>
+            <input type="radio" class="cat-option" name="cat" id="cat-study"    value="study">
+            <label class="cat-option-label" for="cat-study">    <span class="cat-emoji">📚</span>Estudo</label>
+            <input type="radio" class="cat-option" name="cat" id="cat-reading"  value="reading">
+            <label class="cat-option-label" for="cat-reading">  <span class="cat-emoji">📖</span>Leitura</label>
+            <input type="radio" class="cat-option" name="cat" id="cat-exercise" value="exercise">
+            <label class="cat-option-label" for="cat-exercise"> <span class="cat-emoji">🏃</span>Exercício</label>
+            <input type="radio" class="cat-option" name="cat" id="cat-rest"     value="rest">
+            <label class="cat-option-label" for="cat-rest">     <span class="cat-emoji">😴</span>Descanso</label>
+            <input type="radio" class="cat-option" name="cat" id="cat-food"     value="food">
+            <label class="cat-option-label" for="cat-food">     <span class="cat-emoji">🍽️</span>Alimentação</label>
+          </div>
         </div>
 
-        <div class="form-grid">
-          <!-- Categoria -->
-          <div class="form-group form-full">
-            <label>Categoria <span class="req">*</span></label>
-            <div
-              class="cat-selector"
-              role="group"
-              aria-label="Selecione a categoria"
-            >
-              <input
-                type="radio"
-                class="cat-option"
-                name="cat"
-                id="cat-work"
-                value="work"
-              />
-              <label class="cat-option-label" for="cat-work">
-                <span class="cat-emoji">💼</span>Trabalho</label
-              >
-              <input
-                type="radio"
-                class="cat-option"
-                name="cat"
-                id="cat-study"
-                value="study"
-              />
-              <label class="cat-option-label" for="cat-study">
-                <span class="cat-emoji">📚</span>Estudo</label
-              >
-              <input
-                type="radio"
-                class="cat-option"
-                name="cat"
-                id="cat-reading"
-                value="reading"
-              />
-              <label class="cat-option-label" for="cat-reading">
-                <span class="cat-emoji">📖</span>Leitura</label
-              >
-              <input
-                type="radio"
-                class="cat-option"
-                name="cat"
-                id="cat-exercise"
-                value="exercise"
-              />
-              <label class="cat-option-label" for="cat-exercise">
-                <span class="cat-emoji">🏃</span>Exercício</label
-              >
-              <input
-                type="radio"
-                class="cat-option"
-                name="cat"
-                id="cat-rest"
-                value="rest"
-              />
-              <label class="cat-option-label" for="cat-rest">
-                <span class="cat-emoji">😴</span>Descanso</label
-              >
-              <input
-                type="radio"
-                class="cat-option"
-                name="cat"
-                id="cat-food"
-                value="food"
-              />
-              <label class="cat-option-label" for="cat-food">
-                <span class="cat-emoji">🍽️</span>Alimentação</label
-              >
-            </div>
-          </div>
-
-          <!-- Título -->
-          <div class="form-group form-full">
-            <label for="fTitle">Título <span class="req">*</span></label>
-            <input
-              type="text"
-              class="form-control"
-              id="fTitle"
-              placeholder="Ex: Reunião de alinhamento, Treino de musculação..."
-            />
-          </div>
-
-          <!-- Data / Hora início / Hora fim -->
-          <div class="form-group">
-            <label for="fDate">Data <span class="req">*</span></label>
-            <input type="date" class="form-control" id="fDate" />
-          </div>
-          <div class="form-group">
-            <label for="fStart">Horário de Início</label>
-            <input type="time" class="form-control" id="fStart" />
-          </div>
-          <div class="form-group">
-            <label for="fEnd">Horário de Fim</label>
-            <input type="time" class="form-control" id="fEnd" />
-          </div>
-
-          <!-- Duração / Prioridade -->
-          <div class="form-group">
-            <label for="fDuration">Duração (min)</label>
-            <input
-              type="number"
-              class="form-control"
-              id="fDuration"
-              placeholder="60"
-              min="1"
-            />
-          </div>
-          <div class="form-group">
-            <label for="fPriority">Prioridade</label>
-            <select class="form-control" id="fPriority">
-              <option value="normal">Normal</option>
-              <option value="alta">Alta</option>
-              <option value="baixa">Baixa</option>
-            </select>
-          </div>
-
-          <!-- Status -->
-          <div class="form-group">
-            <label for="fStatus">Status</label>
-            <select class="form-control" id="fStatus">
-              <option value="pendente">Pendente</option>
-              <option value="em andamento">Em Andamento</option>
-              <option value="concluído">Concluído</option>
-              <option value="cancelado">Cancelado</option>
-            </select>
-          </div>
-
-          <!-- WhatsApp -->
-          <div class="form-group form-full">
-            <label for="fWhatsapp">
-              WhatsApp para Lembrete
-              <span class="label-hint"
-                >(com DDD e código do país, ex: 5511999998888)</span
-              >
-            </label>
-            <div class="input-with-icon">
-              <span class="input-icon">📱</span>
-              <input
-                type="tel"
-                class="form-control"
-                id="fWhatsapp"
-                placeholder="5511999998888"
-              />
-            </div>
-            <small class="form-hint"
-              >Você receberá um lembrete 5 minutos antes do início da
-              atividade.</small
-            >
-          </div>
-
-          <!-- Descrição -->
-          <div class="form-group form-full">
-            <label for="fDesc">Descrição</label>
-            <textarea
-              class="form-control"
-              id="fDesc"
-              placeholder="Detalhes opcionais..."
-              rows="3"
-            ></textarea>
-          </div>
+        <!-- Título -->
+        <div class="form-group form-full">
+          <label for="fTitle">Título <span class="req">*</span></label>
+          <input type="text" class="form-control" id="fTitle" placeholder="Ex: Reunião de alinhamento, Treino de musculação...">
         </div>
-        <!-- /form-grid -->
 
-        <div class="modal-footer">
-          <button class="btn-secondary" id="btnCancelModal">Cancelar</button>
-          <button class="btn-primary" id="btnSaveEntry">
-            <span id="btnSaveText">Salvar Entrada</span>
-          </button>
+        <!-- Data / Hora início / Hora fim -->
+        <div class="form-group">
+          <label for="fDate">Data <span class="req">*</span></label>
+          <input type="date" class="form-control" id="fDate">
         </div>
+        <div class="form-group">
+          <label for="fStart">Horário de Início</label>
+          <input type="time" class="form-control" id="fStart">
+        </div>
+        <div class="form-group">
+          <label for="fEnd">Horário de Fim</label>
+          <input type="time" class="form-control" id="fEnd">
+        </div>
+
+        <!-- Duração / Prioridade -->
+        <div class="form-group">
+          <label for="fDuration">Duração (min)</label>
+          <input type="number" class="form-control" id="fDuration" placeholder="60" min="1">
+        </div>
+        <div class="form-group">
+          <label for="fPriority">Prioridade</label>
+          <select class="form-control" id="fPriority">
+            <option value="normal">Normal</option>
+            <option value="alta">Alta</option>
+            <option value="baixa">Baixa</option>
+          </select>
+        </div>
+
+        <!-- Status -->
+        <div class="form-group">
+          <label for="fStatus">Status</label>
+          <select class="form-control" id="fStatus">
+            <option value="pendente">Pendente</option>
+            <option value="em andamento">Em Andamento</option>
+            <option value="concluído">Concluído</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </div>
+
+        <!-- WhatsApp -->
+        <div class="form-group form-full">
+          <label for="fWhatsapp">
+            WhatsApp <span class="label-hint">(opcional — para contato manual, ex: 5511999998888)</span>
+          </label>
+          <div class="input-with-icon">
+            <span class="input-icon">📱</span>
+            <input type="tel" class="form-control" id="fWhatsapp" placeholder="5511999998888">
+          </div>
+          <small class="form-hint">
+            Os lembretes automáticos (15 min e 5 min antes) são enviados como notificação nativa do seu dispositivo — não é necessário WhatsApp para isso.
+          </small>
+        </div>
+
+        <!-- Descrição -->
+        <div class="form-group form-full">
+          <label for="fDesc">Descrição</label>
+          <textarea class="form-control" id="fDesc" placeholder="Detalhes opcionais..." rows="3"></textarea>
+        </div>
+
+      </div><!-- /form-grid -->
+
+      <div class="modal-footer">
+        <button class="btn-secondary" id="btnCancelModal">Cancelar</button>
+        <button class="btn-primary" id="btnSaveEntry">
+          <span id="btnSaveText">Salvar Entrada</span>
+        </button>
       </div>
     </div>
+  </div>
 
-    <!-- ══════════════════════════════════
+  <!-- ══════════════════════════════════
        MODAL: CONFIRMAR EXCLUSÃO
   ══════════════════════════════════ -->
-    <div
-      class="confirm-overlay"
-      id="confirmOverlay"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="confirmTitle"
-    >
-      <div class="confirm-box">
-        <h3 id="confirmTitle">Excluir Entrada</h3>
-        <p>
-          Esta ação não pode ser desfeita. Deseja realmente excluir esta
-          atividade?
-        </p>
-        <div class="confirm-footer">
-          <button class="btn-secondary" id="btnCancelDelete">Cancelar</button>
-          <button class="btn-danger" id="btnConfirmDelete">🗑️ Excluir</button>
-        </div>
+  <div class="confirm-overlay" id="confirmOverlay" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="confirm-box">
+      <h3 id="confirmTitle">Excluir Entrada</h3>
+      <p>Esta ação não pode ser desfeita. Deseja realmente excluir esta atividade?</p>
+      <div class="confirm-footer">
+        <button class="btn-secondary" id="btnCancelDelete">Cancelar</button>
+        <button class="btn-danger"    id="btnConfirmDelete">🗑️ Excluir</button>
       </div>
     </div>
+  </div>
 
-    <!-- ══════════════════════════════════
+  <!-- ══════════════════════════════════
        MODAL: LEMBRETE (WhatsApp alert)
   ══════════════════════════════════ -->
-    <div
-      class="reminder-overlay"
-      id="reminderOverlay"
-      role="alertdialog"
-      aria-modal="true"
-      aria-labelledby="reminderTitle"
-    >
-      <div class="reminder-box">
-        <div class="reminder-icon">⏰</div>
-        <h3 id="reminderTitle">Lembrete de Atividade</h3>
-        <p id="reminderMsg">—</p>
-        <div class="reminder-footer">
-          <button class="btn-secondary" id="btnReminderDismiss">
-            Dispensar
-          </button>
-          <button class="btn-whatsapp" id="btnReminderWhatsapp">
-            <span>📲</span> Abrir WhatsApp
-          </button>
-        </div>
+  <div class="reminder-overlay" id="reminderOverlay" role="alertdialog" aria-modal="true" aria-labelledby="reminderTitle">
+    <div class="reminder-box">
+      <div class="reminder-icon">⏰</div>
+      <h3 id="reminderTitle">Lembrete de Atividade</h3>
+      <p id="reminderMsg">—</p>
+      <div class="reminder-footer">
+        <button class="btn-primary" id="btnReminderDismiss">✓ Ok, entendido</button>
       </div>
     </div>
+  </div>
 
-    <!-- TOAST AREA -->
-    <div
-      class="toast-area"
-      id="toastArea"
-      aria-live="polite"
-      aria-atomic="false"
-    ></div>
+  <!-- TOAST AREA -->
+  <div class="toast-area" id="toastArea" aria-live="polite" aria-atomic="false"></div>
 
-    <script src="assets/script.js"></script>
-  </body>
+  <script src="assets/script.js"></script>
+</body>
 </html>

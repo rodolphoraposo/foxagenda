@@ -8,10 +8,9 @@
 /* ──────────────────────────────────────
    CONSTANTS
 ────────────────────────────────────── */
-const STORAGE_KEY    = 'foxagenda_entries';
-const MONTH_KEY      = 'foxagenda_active_month';
-const THEME_KEY      = 'foxagenda_theme';
-const ALERTED_KEY    = 'foxagenda_alerted';
+const STORAGE_KEY = 'foxagenda_entries';
+const MONTH_KEY   = 'foxagenda_active_month';
+const THEME_KEY   = 'foxagenda_theme';
 
 const CATEGORIES = {
   work:     { label: 'Trabalho',    emoji: '💼', color: 'var(--work)' },
@@ -40,17 +39,15 @@ const DAILY_GOALS = { work: 3, study: 2, reading: 1, exercise: 1, rest: 1, food:
    APPLICATION STATE
 ────────────────────────────────────── */
 const state = {
-  entries:       [],
-  view:          'dashboard',
-  filter:        'all',
-  sort:          'date_desc',
-  editId:        null,
-  deleteId:      null,
-  calYear:       0,
-  calMonth:      0,
-  theme:         'system',   // 'dark' | 'light' | 'system'
-  alertedIds:    new Set(),  // IDs already reminded this session
-  pendingReminder: null,     // { entry, waUrl }
+  entries:  [],
+  view:     'dashboard',
+  filter:   'all',
+  sort:     'date_desc',
+  editId:   null,
+  deleteId: null,
+  calYear:  0,
+  calMonth: 0,
+  theme:    'system',   // 'dark' | 'light' | 'system'
 };
 
 /* ──────────────────────────────────────
@@ -111,31 +108,10 @@ function loadData() {
     state.entries   = [];
   }
 
-  // Load alerted IDs (persist in localStorage to survive page reloads within same session day)
-  try {
-    const alertedRaw = localStorage.getItem(ALERTED_KEY);
-    if (alertedRaw) {
-      const parsed = JSON.parse(alertedRaw);
-      state.alertedIds = new Set(parsed.ids || []);
-      // Clear alerted list if it was saved on a different day
-      if (parsed.date !== todayStr()) {
-        state.alertedIds = new Set();
-      }
-    }
-  } catch {
-    state.alertedIds = new Set();
-  }
 }
 
 function saveData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.entries));
-}
-
-function saveAlerted() {
-  localStorage.setItem(ALERTED_KEY, JSON.stringify({
-    date: todayStr(),
-    ids: [...state.alertedIds],
-  }));
 }
 
 /* ──────────────────────────────────────
@@ -457,9 +433,11 @@ function markStarted(id) {
 function markFinished(id) {
   const entry = state.entries.find(e => e.id === id);
   if (!entry) return;
-  entry.status      = 'concluído';
-  entry.finishedAt  = new Date().toISOString();
+  entry.status     = 'concluído';
+  entry.finishedAt = new Date().toISOString();
   saveData();
+  cancelEntryAlerts(id);    // não precisa mais de lembrete
+  scheduleAllAlerts();
   showToast(`✅ "${entry.title}" concluído!`, 'success');
   renderCurrentView();
 }
@@ -469,6 +447,8 @@ function markNotDone(id) {
   if (!entry) return;
   entry.status = 'não realizado';
   saveData();
+  cancelEntryAlerts(id);    // não precisa mais de lembrete
+  scheduleAllAlerts();
   showToast(`❌ "${entry.title}" marcado como não realizado.`, 'warning');
   renderCurrentView();
 }
@@ -698,6 +678,7 @@ function saveEntry() {
 
   saveData();
   closeModal();
+  scheduleAllAlerts();   // reagenda notificações com os dados atualizados
   renderCurrentView();
 }
 
@@ -710,83 +691,187 @@ function askDelete(id) {
 }
 
 function confirmDelete() {
-  state.entries = state.entries.filter(e => e.id !== state.deleteId);
+  const id = state.deleteId;
+  cancelEntryAlerts(id);                 // cancela alertas no SW
+  state.entries = state.entries.filter(e => e.id !== id);
   saveData();
   document.getElementById('confirmOverlay').classList.remove('open');
   showToast('Entrada excluída.', 'info');
+  scheduleAllAlerts();                   // reagenda o restante
   renderCurrentView();
 }
 
-/* ──────────────────────────────────────
-   REMINDER SYSTEM (WhatsApp — 5min before)
-────────────────────────────────────── */
-function initReminders() {
-  // Request notification permission
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission();
+/* ══════════════════════════════════════════════════════════
+   SISTEMA DE LEMBRETES — Service Worker + Notificações Nativas
+   ══════════════════════════════════════════════════════════
+   Funcionamento:
+   • Um Service Worker (sw.js) é registrado na inicialização.
+   • Toda vez que uma entrada é salva ou excluída, a função
+     scheduleAllAlerts() recalcula TODOS os alertas futuros
+     e os envia ao SW via postMessage.
+   • O SW usa setTimeout com o delay exato em ms para cada
+     alerta — zero risco de intervalo "pular" a janela.
+   • Alertas: 15 min e 5 min antes de cada atividade com
+     horário definido e status ativo.
+   • Quando o SW dispara, o SO exibe notificação nativa com
+     vibração, som e botão "Abrir FoxAgenda".
+   • Clicar na notificação foca o app e destaca a entrada.
+   ══════════════════════════════════════════════════════════ */
+
+/* Thresholds: [minutos antes, label] */
+const ALERT_OFFSETS = [
+  { min: 15, label: '15 minutos' },
+  { min:  5, label:  '5 minutos' },
+];
+
+/* Ícone inline SVG como data URL (não requer arquivo externo) */
+const SW_ICON = 'data:image/svg+xml,' + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' +
+  '<rect width="100" height="100" rx="20" fill="#7c6af5"/>' +
+  '<text y="72" x="50" text-anchor="middle" font-size="62">🦊</text>' +
+  '</svg>'
+);
+
+/* Referência ao SW registrado */
+let swRegistration = null;
+
+/* ── Registrar Service Worker ── */
+async function initServiceWorker() {
+  if (!('serviceWorker' in navigator)) {
+    showToast('Seu navegador não suporta Service Workers. Lembretes em segundo plano indisponíveis.', 'warning', 6000);
+    return false;
   }
 
-  // Check every 30 seconds
-  setInterval(checkReminders, 30_000);
-  checkReminders(); // also run immediately
+  try {
+    swRegistration = await navigator.serviceWorker.register('./sw.js', { scope: './' });
+    await navigator.serviceWorker.ready;
+
+    /* Ouve mensagens vindas do SW (ex.: HIGHLIGHT_ENTRY) */
+    navigator.serviceWorker.addEventListener('message', onSwMessage);
+
+    console.info('[FoxAgenda] Service Worker registrado:', swRegistration.scope);
+    return true;
+  } catch (err) {
+    console.warn('[FoxAgenda] Falha ao registrar SW:', err);
+    showToast('Não foi possível registrar o Service Worker.', 'warning', 5000);
+    return false;
+  }
 }
 
-function checkReminders() {
-  const now    = new Date();
-  const today  = fmtDateStr(now);
+/* ── Pedir permissão de notificação ── */
+async function requestNotificationPermission() {
+  if (!('Notification' in window)) return false;
+  if (Notification.permission === 'granted') return true;
+  if (Notification.permission === 'denied')  return false;
+
+  const result = await Notification.requestPermission();
+  if (result === 'granted') {
+    showToast('✅ Notificações ativadas! Você será avisado antes das atividades.', 'success', 4000);
+    return true;
+  }
+  showToast('⚠️ Permissão de notificação negada. Lembretes não funcionarão.', 'warning', 5000);
+  return false;
+}
+
+/* ── Inicializar sistema de lembretes ── */
+async function initReminders() {
+  const swOk   = await initServiceWorker();
+  const permOk = await requestNotificationPermission();
+
+  if (swOk && permOk) {
+    scheduleAllAlerts();
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   CÁLCULO E ENVIO DE ALERTAS AO SERVICE WORKER
+══════════════════════════════════════════════════════════ */
+
+/**
+ * Reconstrói a lista completa de alertas futuros e envia ao SW.
+ * Deve ser chamada após qualquer mudança nas entradas.
+ */
+function scheduleAllAlerts() {
+  if (!swRegistration?.active) return;
+  if (Notification.permission !== 'granted') return;
+
+  const now    = Date.now();
+  const alerts = [];
 
   state.entries.forEach(entry => {
-    // Only entries today, with a start time, with WhatsApp, not yet alerted, not done/cancelled
-    if (entry.date !== today) return;
+    /* Ignora entradas sem horário ou já finalizadas */
     if (!entry.start) return;
-    if (!entry.whatsapp) return;
-    if (state.alertedIds.has(entry.id)) return;
     if (['concluído', 'cancelado', 'não realizado'].includes(entry.status)) return;
 
-    const activityTime = parseDateTime(entry.date, entry.start);
-    const diffMin      = (activityTime - now) / 60_000;
+    const activityMs = parseDateTime(entry.date, entry.start)?.getTime();
+    if (!activityMs) return;
 
-    // Trigger if between 4 and 6 minutes before start
-    if (diffMin >= 4 && diffMin <= 6) {
-      triggerReminder(entry);
-    }
-  });
-}
+    const c = CATEGORIES[entry.cat];
 
-function triggerReminder(entry) {
-  state.alertedIds.add(entry.id);
-  saveAlerted();
+    ALERT_OFFSETS.forEach(({ min, label }) => {
+      const fireAt   = activityMs - min * 60_000;
+      const alertKey = `${entry.id}_${min}`;
 
-  const c      = CATEGORIES[entry.cat];
-  const msg    = `${c.emoji} "${entry.title}" começa em 5 minutos às ${entry.start}!`;
-  const waText = encodeURIComponent(
-    `⏰ Lembrete FoxAgenda:\n\n${c.emoji} *${entry.title}*\n📅 ${formatDate(entry.date)} às ${entry.start}\n\nSua atividade começa em 5 minutos!`
-  );
-  const waUrl  = `https://wa.me/${entry.whatsapp}?text=${waText}`;
+      if (fireAt <= now) return;  /* já passou */
 
-  // ① Browser notification
-  if ('Notification' in window && Notification.permission === 'granted') {
-    const notif = new Notification('FoxAgenda — Lembrete ⏰', {
-      body: msg,
-      icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🦊</text></svg>',
-      tag:  `foxagenda-${entry.id}`,
+      alerts.push({
+        key:     alertKey,
+        entryId: entry.id,
+        fireAt,
+        title:   `⏰ FoxAgenda — Lembrete`,
+        body:    `${c.emoji} "${entry.title}" começa em ${label} (${entry.start}).`,
+        icon:    SW_ICON,
+        badge:   SW_ICON,
+      });
     });
-    notif.onclick = () => { window.focus(); showReminderModal(entry, msg, waUrl); };
-  }
+  });
 
-  // ② In-app reminder modal
-  state.pendingReminder = { entry, waUrl };
-  showReminderModal(entry, msg, waUrl);
+  swRegistration.active.postMessage({ type: 'SCHEDULE_ALERTS', alerts });
+  console.info(`[FoxAgenda] ${alerts.length} alerta(s) agendado(s) no SW.`);
 }
 
-function showReminderModal(entry, msg, waUrl) {
-  document.getElementById('reminderMsg').textContent    = msg;
-  document.getElementById('reminderOverlay').classList.add('open');
+/**
+ * Cancela os alertas de uma entrada específica no SW.
+ * Chamada quando uma entrada é excluída ou finalizada.
+ */
+function cancelEntryAlerts(entryId) {
+  if (!swRegistration?.active) return;
+  const keys = ALERT_OFFSETS.map(({ min }) => `${entryId}_${min}`);
+  swRegistration.active.postMessage({ type: 'CANCEL_ALERT', keys });
+}
 
-  document.getElementById('btnReminderWhatsapp').onclick = () => {
-    window.open(waUrl, '_blank', 'noopener');
-    document.getElementById('reminderOverlay').classList.remove('open');
-  };
+/* ── Mensagens recebidas do SW ── */
+function onSwMessage(event) {
+  const { type, entryId } = event.data || {};
+
+  /* SW pediu para destacar uma entrada (usuário clicou na notificação) */
+  if (type === 'HIGHLIGHT_ENTRY' && entryId) {
+    switchView('entries', 'all');
+    setTimeout(() => {
+      const card = document.querySelector(`.entry-card[data-id="${entryId}"]`);
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        card.style.outline = '2px solid var(--accent)';
+        setTimeout(() => { card.style.outline = ''; }, 3000);
+      }
+    }, 300);
+  }
+}
+
+/* ── Modal de lembrete (in-app, mostrado quando notificação chega com a aba aberta) ── */
+function showReminderModal(entryId, timeLabel) {
+  const entry = state.entries.find(e => e.id === entryId);
+  if (!entry) return;
+
+  const c       = CATEGORIES[entry.cat];
+  const overlay = document.getElementById('reminderOverlay');
+  const msgEl   = document.getElementById('reminderMsg');
+
+  msgEl.innerHTML =
+    `<strong>${c.emoji} "${escapeHtml(entry.title)}"</strong><br>` +
+    `começa em <strong>${timeLabel}</strong> às <strong>${entry.start}</strong>.`;
+
+  overlay.classList.add('open');
 }
 
 /* ──────────────────────────────────────
