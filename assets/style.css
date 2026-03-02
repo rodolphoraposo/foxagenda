@@ -812,7 +812,8 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .sidebar-overlay {
   display: none;
   position: fixed; inset: 0; background: rgba(0,0,0,.55);
-  z-index: 35; backdrop-filter: blur(2px);
+  z-index: 35;
+  /* SEM backdrop-filter aqui — blur na base vaza para o sidebar e causa embaçamento */
 }
 .sidebar-overlay.active { display: block; }
 
@@ -902,9 +903,20 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   .topbar-title    { font-size: .95rem; }
   .topbar-subtitle { font-size: .7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  /* Theme toggle: some do topbar, aparece no sidebar */
-  .theme-toggle:not(.theme-toggle-sidebar) { display: none; }
-  .sidebar-theme-block { display: flex; }
+  /* Theme toggle: mantém na topbar em mobile — compacto, só emoji, sem fundo visível */
+  .theme-toggle:not(.theme-toggle-sidebar) {
+    background: none;
+    border: 1px solid var(--border);
+    padding: 2px;
+    gap: 1px;
+  }
+  .theme-toggle:not(.theme-toggle-sidebar) .theme-btn {
+    padding: 6px 7px;
+    font-size: .85rem;
+    min-height: 36px; min-width: 36px;
+  }
+  /* sidebar-theme-block continua oculto em mobile (toggle já está na topbar) */
+  .sidebar-theme-block { display: none; }
 
   /* Btn "Nova Entrada": só o ícone no mobile */
   .btn-primary .btn-label { display: none; }
@@ -1027,9 +1039,26 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     border-radius: 20px 20px 0 0;
     padding: 20px 16px 32px;
     max-height: 92dvh;
-    transform: translateY(100%);
+    /* Usa animation (não transition) para que após terminar não haja transform residual.
+       transform ativo no pai quebra o posicionamento do seletor nativo de hora no Chrome Android. */
+    transform: none;
+    animation: none;
   }
-  .modal-overlay.open .modal { transform: translateY(0); }
+  /* Estado FECHADO: oculto fora da tela via position */
+  .modal-overlay:not(.open) .modal {
+    position: fixed;
+    bottom: -100%;
+  }
+  /* Estado ABRINDO: anima de baixo para cima, termina sem transform */
+  .modal-overlay.open .modal {
+    animation: modalSlideUp .25s cubic-bezier(.32,0,.67,0) forwards;
+  }
+  @keyframes modalSlideUp {
+    from { transform: translateY(100%); opacity: .6; }
+    to   { transform: translateY(0);   opacity: 1; }
+  }
+  /* IMPORTANTE: após a animação o JS remove a classe de animação,
+     garantindo transform:none final — veja script.js fixModalTransform() */
   .form-grid  { grid-template-columns: 1fr; gap: 12px; }
   .cat-selector { grid-template-columns: repeat(3, 1fr); gap: 7px; }
   .cat-option-label { padding: 9px 4px; font-size: .72rem; }
@@ -1044,9 +1073,12 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     width: 100%; max-width: 100%;
     border-radius: 20px 20px 0 0;
     padding: 22px 18px 36px;
-    transform: translateY(100%);
+    transform: none; animation: none;
   }
-  .confirm-overlay.open .confirm-box { transform: translateY(0); }
+  .confirm-overlay:not(.open) .confirm-box { position: fixed; bottom: -100%; }
+  .confirm-overlay.open .confirm-box {
+    animation: modalSlideUp .22s cubic-bezier(.32,0,.67,0) forwards;
+  }
   .confirm-footer { flex-direction: column-reverse; gap: 8px; }
   .confirm-footer .btn-danger,
   .confirm-footer .btn-secondary { width: 100%; justify-content: center; min-height: 46px; }
@@ -1057,9 +1089,12 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     width: 100%; max-width: 100%;
     border-radius: 20px 20px 0 0;
     padding: 24px 18px 40px;
-    transform: translateY(100%);
+    transform: none; animation: none;
   }
-  .reminder-overlay.open .reminder-box { transform: translateY(0); }
+  .reminder-overlay:not(.open) .reminder-box { position: fixed; bottom: -100%; }
+  .reminder-overlay.open .reminder-box {
+    animation: modalSlideUp .22s cubic-bezier(.32,0,.67,0) forwards;
+  }
   .reminder-footer button { width: 100%; min-height: 46px; justify-content: center; }
 
   /* ── Toast: full-width e embaixo centrado ── */

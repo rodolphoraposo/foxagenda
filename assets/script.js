@@ -612,13 +612,25 @@ function openModal(entry, prefillDate) {
   });
 
   document.getElementById('modalOverlay').classList.add('open');
-  // Focus first interactive element
+  fixModalTransform(document.querySelector('#modalOverlay .modal'));
   setTimeout(() => document.getElementById('fTitle').focus(), 100);
 }
 
 function closeModal() {
   document.getElementById('modalOverlay').classList.remove('open');
   state.editId = null;
+}
+
+/**
+ * Após a animação de entrada do bottom-sheet, remove o transform residual.
+ * Isso impede que o transform no pai quebre o posicionamento do
+ * seletor nativo de hora/data do Chrome Android.
+ */
+function fixModalTransform(modalEl) {
+  if (!modalEl) return;
+  modalEl.addEventListener('animationend', () => {
+    modalEl.style.transform = 'none';
+  }, { once: true });
 }
 
 function openEdit(id) {
@@ -702,29 +714,27 @@ function confirmDelete() {
 }
 
 /* ══════════════════════════════════════════════════════════
-   SISTEMA DE LEMBRETES — Service Worker + Notificações Nativas
+   SISTEMA DE LEMBRETES — Thread Principal + Service Worker
    ══════════════════════════════════════════════════════════
-   Funcionamento:
-   • Um Service Worker (sw.js) é registrado na inicialização.
-   • Toda vez que uma entrada é salva ou excluída, a função
-     scheduleAllAlerts() recalcula TODOS os alertas futuros
-     e os envia ao SW via postMessage.
-   • O SW usa setTimeout com o delay exato em ms para cada
-     alerta — zero risco de intervalo "pular" a janela.
-   • Alertas: 15 min e 5 min antes de cada atividade com
-     horário definido e status ativo.
-   • Quando o SW dispara, o SO exibe notificação nativa com
-     vibração, som e botão "Abrir FoxAgenda".
-   • Clicar na notificação foca o app e destaca a entrada.
+   ARQUITETURA CORRETA:
+   • Os setTimeout vivem na THREAD PRINCIPAL (script.js).
+     A página fica viva enquanto a aba estiver aberta.
+     setTimeout na thread principal é confiável.
+   • Quando o timer dispara, a página pede ao SW para
+     exibir a notificação nativa via postMessage.
+   • O SW só exibe — não agenda mais nada.
+
+   POR QUE MUDOU:
+   • setTimeout em Service Worker NÃO é confiável: o browser
+     termina SWs ociosos em segundos/minutos para economizar
+     bateria. Todos os timers são perdidos ao terminar o SW.
    ══════════════════════════════════════════════════════════ */
 
-/* Thresholds: [minutos antes, label] */
 const ALERT_OFFSETS = [
   { min: 15, label: '15 minutos' },
   { min:  5, label:  '5 minutos' },
 ];
 
-/* Ícone inline SVG como data URL (não requer arquivo externo) */
 const SW_ICON = 'data:image/svg+xml,' + encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' +
   '<rect width="100" height="100" rx="20" fill="#7c6af5"/>' +
@@ -732,28 +742,25 @@ const SW_ICON = 'data:image/svg+xml,' + encodeURIComponent(
   '</svg>'
 );
 
-/* Referência ao SW registrado */
+/* Map de alertKey → timeoutId na thread principal */
+const scheduledTimers = new Map();
+
 let swRegistration = null;
 
-/* ── Registrar Service Worker ── */
+/* ── Registrar Service Worker (silencioso — não exibe toast de erro ao usuário) ── */
 async function initServiceWorker() {
-  if (!('serviceWorker' in navigator)) {
-    showToast('Seu navegador não suporta Service Workers. Lembretes em segundo plano indisponíveis.', 'warning', 6000);
-    return false;
-  }
+  if (!('serviceWorker' in navigator)) return false;
 
   try {
+    /* sw.js DEVE estar na RAIZ do site (mesmo nível de index.html) */
     swRegistration = await navigator.serviceWorker.register('./sw.js', { scope: './' });
     await navigator.serviceWorker.ready;
-
-    /* Ouve mensagens vindas do SW (ex.: HIGHLIGHT_ENTRY) */
     navigator.serviceWorker.addEventListener('message', onSwMessage);
-
-    console.info('[FoxAgenda] Service Worker registrado:', swRegistration.scope);
+    console.info('[FoxAgenda] SW registrado:', swRegistration.scope);
     return true;
   } catch (err) {
-    console.warn('[FoxAgenda] Falha ao registrar SW:', err);
-    showToast('Não foi possível registrar o Service Worker.', 'warning', 5000);
+    /* Falha silenciosa — o sistema funciona sem SW (notificação via Notification API direta) */
+    console.warn('[FoxAgenda] SW não registrado (normal em file://):', err.message);
     return false;
   }
 }
@@ -769,37 +776,40 @@ async function requestNotificationPermission() {
     showToast('✅ Notificações ativadas! Você será avisado antes das atividades.', 'success', 4000);
     return true;
   }
-  showToast('⚠️ Permissão de notificação negada. Lembretes não funcionarão.', 'warning', 5000);
+  showToast('⚠️ Permissão de notificação negada. Ative nas configurações do browser.', 'warning', 5000);
   return false;
 }
 
 /* ── Inicializar sistema de lembretes ── */
 async function initReminders() {
-  const swOk   = await initServiceWorker();
-  const permOk = await requestNotificationPermission();
+  await initServiceWorker();
+  await requestNotificationPermission();
+  scheduleAllAlerts();
 
-  if (swOk && permOk) {
-    scheduleAllAlerts();
-  }
+  /* Reagenda ao voltar do background (tab reativada) */
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') scheduleAllAlerts();
+  });
 }
 
 /* ══════════════════════════════════════════════════════════
-   CÁLCULO E ENVIO DE ALERTAS AO SERVICE WORKER
+   AGENDAMENTO NA THREAD PRINCIPAL
 ══════════════════════════════════════════════════════════ */
 
 /**
- * Reconstrói a lista completa de alertas futuros e envia ao SW.
- * Deve ser chamada após qualquer mudança nas entradas.
+ * Cancela todos os timers existentes e recalcula tudo do zero.
+ * Chamar após qualquer criação, edição ou exclusão de entrada.
  */
 function scheduleAllAlerts() {
-  if (!swRegistration?.active) return;
   if (Notification.permission !== 'granted') return;
 
-  const now    = Date.now();
-  const alerts = [];
+  /* Cancela timers anteriores */
+  scheduledTimers.forEach(id => clearTimeout(id));
+  scheduledTimers.clear();
+
+  const now = Date.now();
 
   state.entries.forEach(entry => {
-    /* Ignora entradas sem horário ou já finalizadas */
     if (!entry.start) return;
     if (['concluído', 'cancelado', 'não realizado'].includes(entry.status)) return;
 
@@ -810,41 +820,70 @@ function scheduleAllAlerts() {
 
     ALERT_OFFSETS.forEach(({ min, label }) => {
       const fireAt   = activityMs - min * 60_000;
+      const delay    = fireAt - now;
       const alertKey = `${entry.id}_${min}`;
 
-      if (fireAt <= now) return;  /* já passou */
+      if (delay <= 0)                         return;  /* já passou */
+      if (delay > 7 * 24 * 60 * 60 * 1000)   return;  /* >7 dias — não agenda */
 
-      alerts.push({
-        key:     alertKey,
-        entryId: entry.id,
-        fireAt,
-        title:   `⏰ FoxAgenda — Lembrete`,
-        body:    `${c.emoji} "${entry.title}" começa em ${label} (${entry.start}).`,
-        icon:    SW_ICON,
-        badge:   SW_ICON,
-      });
+      const timerId = setTimeout(() => {
+        scheduledTimers.delete(alertKey);
+        fireAlert({
+          entryId: entry.id,
+          tag:     alertKey,
+          title:   '⏰ FoxAgenda — Lembrete',
+          body:    `${c.emoji} "${entry.title}" começa em ${label} (${entry.start}).`,
+          icon:    SW_ICON,
+        });
+      }, delay);
+
+      scheduledTimers.set(alertKey, timerId);
     });
   });
 
-  swRegistration.active.postMessage({ type: 'SCHEDULE_ALERTS', alerts });
-  console.info(`[FoxAgenda] ${alerts.length} alerta(s) agendado(s) no SW.`);
+  console.info(`[FoxAgenda] ${scheduledTimers.size} alerta(s) agendado(s) na thread principal.`);
 }
 
 /**
- * Cancela os alertas de uma entrada específica no SW.
- * Chamada quando uma entrada é excluída ou finalizada.
+ * Cancela timers de uma entrada específica (ao excluir ou finalizar).
  */
 function cancelEntryAlerts(entryId) {
-  if (!swRegistration?.active) return;
-  const keys = ALERT_OFFSETS.map(({ min }) => `${entryId}_${min}`);
-  swRegistration.active.postMessage({ type: 'CANCEL_ALERT', keys });
+  ALERT_OFFSETS.forEach(({ min }) => {
+    const key = `${entryId}_${min}`;
+    if (scheduledTimers.has(key)) {
+      clearTimeout(scheduledTimers.get(key));
+      scheduledTimers.delete(key);
+    }
+  });
+}
+
+/**
+ * Dispara o alerta: usa SW se disponível, senão Notification API direta.
+ */
+function fireAlert({ entryId, tag, title, body, icon }) {
+  /* ① Tenta via SW (funciona com a aba em background no desktop) */
+  if (swRegistration?.active) {
+    swRegistration.active.postMessage({ type: 'SHOW_NOTIFICATION', entryId, tag, title, body, icon });
+    return;
+  }
+
+  /* ② Fallback: Notification API direta (requer aba ativa/visível) */
+  if ('Notification' in window && Notification.permission === 'granted') {
+    const notif = new Notification(title, {
+      body, icon, tag,
+      requireInteraction: true,
+    });
+    notif.onclick = () => {
+      window.focus();
+      const entry = state.entries.find(e => e.id === entryId);
+      if (entry) showReminderModal(entryId, tag.endsWith('_5') ? '5 minutos' : '15 minutos');
+    };
+  }
 }
 
 /* ── Mensagens recebidas do SW ── */
 function onSwMessage(event) {
   const { type, entryId } = event.data || {};
-
-  /* SW pediu para destacar uma entrada (usuário clicou na notificação) */
   if (type === 'HIGHLIGHT_ENTRY' && entryId) {
     switchView('entries', 'all');
     setTimeout(() => {
@@ -858,20 +897,16 @@ function onSwMessage(event) {
   }
 }
 
-/* ── Modal de lembrete (in-app, mostrado quando notificação chega com a aba aberta) ── */
+/* ── Modal in-app de lembrete ── */
 function showReminderModal(entryId, timeLabel) {
   const entry = state.entries.find(e => e.id === entryId);
   if (!entry) return;
-
-  const c       = CATEGORIES[entry.cat];
-  const overlay = document.getElementById('reminderOverlay');
-  const msgEl   = document.getElementById('reminderMsg');
-
+  const c     = CATEGORIES[entry.cat];
+  const msgEl = document.getElementById('reminderMsg');
   msgEl.innerHTML =
     `<strong>${c.emoji} "${escapeHtml(entry.title)}"</strong><br>` +
     `começa em <strong>${timeLabel}</strong> às <strong>${entry.start}</strong>.`;
-
-  overlay.classList.add('open');
+  document.getElementById('reminderOverlay').classList.add('open');
 }
 
 /* ──────────────────────────────────────
