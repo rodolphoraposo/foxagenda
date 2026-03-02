@@ -1,3 +1,6 @@
+le · CSS
+Copiar
+
 /* ═══════════════════════════════════════════════════════════
    FoxAgenda — style.css
    Temas: dark | light | system
@@ -158,20 +161,21 @@ body::before {
 }
 
 .logo {
-  padding: 22px 20px 18px;
+  padding: 10px;
   border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; gap: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: relative;
+
+  img {
+    width: 200px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
-.logo-icon { font-size: 1.8rem; line-height: 1; }
-.logo h1 {
-  font-family: 'Syne', sans-serif;
-  font-size: 1.3rem; font-weight: 800;
-  letter-spacing: -.5px; color: var(--text);
-  line-height: 1.1;
-}
-.logo h1 span { color: var(--accent); }
-.logo p { font-size: .7rem; color: var(--muted); margin-top: 1px; }
 
 .btn-close-sidebar {
   position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
