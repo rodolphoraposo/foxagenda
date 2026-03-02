@@ -626,7 +626,7 @@ body::before {
    MODAL
 ═══════════════════════════════════ */
 .modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.72);
+  position: fixed; inset: 0; background: rgba(0,0,0);
   display: flex; align-items: center; justify-content: center;
   z-index: 100; backdrop-filter: blur(5px);
   opacity: 0; pointer-events: none;
@@ -722,7 +722,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
    CONFIRM DIALOG
 ═══════════════════════════════════ */
 .confirm-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.72);
+  position: fixed; inset: 0; background: rgba(0,0,0);
   display: flex; align-items: center; justify-content: center;
   z-index: 200; backdrop-filter: blur(5px);
   opacity: 0; pointer-events: none; transition: opacity .2s;
@@ -750,7 +750,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
    REMINDER MODAL
 ═══════════════════════════════════ */
 .reminder-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.78);
+  position: fixed; inset: 0; background: rgba(0,0,0);
   display: flex; align-items: center; justify-content: center;
   z-index: 300; backdrop-filter: blur(6px);
   opacity: 0; pointer-events: none; transition: opacity .22s;
@@ -811,7 +811,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 ═══════════════════════════════════ */
 .sidebar-overlay {
   display: none;
-  position: fixed; inset: 0; background: rgba(0,0,0,.55);
+  position: fixed; inset: 0; background: rgba(0,0,0,.01);
   z-index: 35;
   /* SEM backdrop-filter aqui — blur na base vaza para o sidebar e causa embaçamento */
 }
@@ -913,7 +913,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   .theme-toggle:not(.theme-toggle-sidebar) .theme-btn {
     padding: 6px 7px;
     font-size: .85rem;
-    min-height: 36px; min-width: 36px;
+    min-height: 36px; min-width: 15px;
   }
   /* sidebar-theme-block continua oculto em mobile (toggle já está na topbar) */
   .sidebar-theme-block { display: none; }
