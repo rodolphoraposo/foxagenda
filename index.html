@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fox Agenda — Gestão de Rotina Diária</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./assets/style.css">
+</head>
+<body>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <h1>Routine<span>OS</span></h1>
+      <p>Gestão de Rotina Diária</p>
+    </div>
+    <div class="sidebar-date">
+      <div class="today-label">Hoje</div>
+      <div class="today-value" id="sidebarDate">—</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Visão Geral</div>
+      <button class="nav-btn active" data-view="dashboard">
+        <span class="icon">⚡</span> Dashboard
+      </button>
+      <button class="nav-btn" data-view="entries">
+        <span class="icon">📋</span> Todas as Entradas
+      </button>
+      <button class="nav-btn" data-view="calendar">
+        <span class="icon">📅</span> Calendário
+      </button>
+
+      <div class="nav-section-label" style="margin-top:12px">Categorias</div>
+      <button class="nav-btn" data-view="entries" data-filter="work">
+        <span class="cat-dot" style="background:var(--work)"></span> Trabalho
+      </button>
+      <button class="nav-btn" data-view="entries" data-filter="study">
+        <span class="cat-dot" style="background:var(--study)"></span> Estudo
+      </button>
+      <button class="nav-btn" data-view="entries" data-filter="reading">
+        <span class="cat-dot" style="background:var(--reading)"></span> Leitura
+      </button>
+      <button class="nav-btn" data-view="entries" data-filter="exercise">
+        <span class="cat-dot" style="background:var(--exercise)"></span> Exercício
+      </button>
+      <button class="nav-btn" data-view="entries" data-filter="rest">
+        <span class="cat-dot" style="background:var(--rest)"></span> Descanso
+      </button>
+      <button class="nav-btn" data-view="entries" data-filter="food">
+        <span class="cat-dot" style="background:var(--food)"></span> Alimentação
+      </button>
+    </nav>
+    <div class="sidebar-footer" id="monthInfo">Mês atual — dados preservados</div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="viewTitle">Dashboard</div>
+        <div class="topbar-subtitle" id="viewSubtitle">Resumo da rotina de hoje</div>
+      </div>
+      <button class="btn-primary" id="btnAddEntry">
+        <span>＋</span> Nova Entrada
+      </button>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- DASHBOARD VIEW -->
+      <div class="view active" id="view-dashboard">
+        <div class="stats-grid" id="statsGrid"></div>
+        <div class="weekly-section">
+          <div class="section-title">Atividades — Últimos 7 dias</div>
+          <div class="bar-chart" id="barChart"></div>
+        </div>
+        <div class="section-title">Meta Diária por Categoria</div>
+        <div class="progress-section" id="progressSection"></div>
+      </div>
+
+      <!-- ENTRIES VIEW -->
+      <div class="view" id="view-entries">
+        <div class="filter-bar">
+          <button class="filter-chip active" data-cat="all">Todos</button>
+          <button class="filter-chip" data-cat="work">💼 Trabalho</button>
+          <button class="filter-chip" data-cat="study">📚 Estudo</button>
+          <button class="filter-chip" data-cat="reading">📖 Leitura</button>
+          <button class="filter-chip" data-cat="exercise">🏃 Exercício</button>
+          <button class="filter-chip" data-cat="rest">😴 Descanso</button>
+          <button class="filter-chip" data-cat="food">🍽️ Alimentação</button>
+          <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="searchInput" placeholder="Pesquisar...">
+          </div>
+        </div>
+        <div class="entries-list" id="entriesList"></div>
+      </div>
+
+      <!-- CALENDAR VIEW -->
+      <div class="view" id="view-calendar">
+        <div class="calendar-header">
+          <div class="section-title" id="calTitle" style="margin-bottom:0">—</div>
+          <div class="calendar-nav">
+            <button class="btn-icon" id="calPrev">◀</button>
+            <button class="btn-icon" id="calToday">Hoje</button>
+            <button class="btn-icon" id="calNext">▶</button>
+          </div>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- MODAL ADD/EDIT -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modalTitle">Nova Entrada</h2>
+      <button class="btn-close" id="btnCloseModal">✕</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group form-full">
+        <label>Categoria</label>
+        <div class="cat-selector">
+          <input type="radio" class="cat-option" name="cat" id="cat-work"     value="work">
+          <label class="cat-option-label" for="cat-work">     <span class="cat-emoji">💼</span>Trabalho</label>
+          <input type="radio" class="cat-option" name="cat" id="cat-study"    value="study">
+          <label class="cat-option-label" for="cat-study">    <span class="cat-emoji">📚</span>Estudo</label>
+          <input type="radio" class="cat-option" name="cat" id="cat-reading"  value="reading">
+          <label class="cat-option-label" for="cat-reading">  <span class="cat-emoji">📖</span>Leitura</label>
+          <input type="radio" class="cat-option" name="cat" id="cat-exercise" value="exercise">
+          <label class="cat-option-label" for="cat-exercise"> <span class="cat-emoji">🏃</span>Exercício</label>
+          <input type="radio" class="cat-option" name="cat" id="cat-rest"     value="rest">
+          <label class="cat-option-label" for="cat-rest">     <span class="cat-emoji">😴</span>Descanso</label>
+          <input type="radio" class="cat-option" name="cat" id="cat-food"     value="food">
+          <label class="cat-option-label" for="cat-food">     <span class="cat-emoji">🍽️</span>Alimentação</label>
+        </div>
+      </div>
+      <div class="form-group form-full">
+        <label>Título *</label>
+        <input type="text" class="form-control" id="fTitle" placeholder="Ex: Reunião de alinhamento, Treino de musculação...">
+      </div>
+      <div class="form-group">
+        <label>Data *</label>
+        <input type="date" class="form-control" id="fDate">
+      </div>
+      <div class="form-group">
+        <label>Horário de Início</label>
+        <input type="time" class="form-control" id="fStart">
+      </div>
+      <div class="form-group">
+        <label>Horário de Fim</label>
+        <input type="time" class="form-control" id="fEnd">
+      </div>
+      <div class="form-group">
+        <label>Duração (min)</label>
+        <input type="number" class="form-control" id="fDuration" placeholder="60" min="1">
+      </div>
+      <div class="form-group form-full">
+        <label>Descrição</label>
+        <textarea class="form-control" id="fDesc" placeholder="Detalhes opcionais..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Prioridade</label>
+        <select class="form-control" id="fPriority">
+          <option value="normal">Normal</option>
+          <option value="alta">Alta</option>
+          <option value="baixa">Baixa</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select class="form-control" id="fStatus">
+          <option value="pendente">Pendente</option>
+          <option value="em andamento">Em Andamento</option>
+          <option value="concluído">Concluído</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" id="btnCancelModal">Cancelar</button>
+      <button class="btn-primary" id="btnSaveEntry">Salvar Entrada</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIRM DELETE -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h3>Excluir Entrada</h3>
+    <p>Esta ação não pode ser desfeita. Tem certeza que deseja excluir esta entrada?</p>
+    <div class="confirm-footer">
+      <button class="btn-secondary" id="btnCancelDelete">Cancelar</button>
+      <button class="btn-danger" id="btnConfirmDelete">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST AREA -->
+<div class="toast-area" id="toastArea"></div>
+
+<script src="assets/script.js"></script>
+</body>
+</html>
