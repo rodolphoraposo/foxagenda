@@ -647,18 +647,6 @@ function openEdit(id) {
 }
 
 /* ──────────────────────────────────────
-   VALIDATION — 24h rule
-────────────────────────────────────── */
-function validate24h(dateStr, startTime) {
-  const activityDt = parseDateTime(dateStr, startTime || '00:00');
-  if (!activityDt) return false;
-  const now         = new Date();
-  const diffMs      = activityDt.getTime() - now.getTime();
-  const diffHours   = diffMs / (1000 * 60 * 60);
-  return diffHours >= 24;
-}
-
-/* ──────────────────────────────────────
    SAVE ENTRY
 ────────────────────────────────────── */
 function saveEntry() {
@@ -682,24 +670,6 @@ function saveEntry() {
   }
   if (!date) {
     showToast('Informe a data da atividade.', 'error'); return;
-  }
-
-  // 24h rule (only on create, or if date/time changed)
-  const isNew = !state.editId;
-  if (isNew) {
-    if (!validate24h(date, start)) {
-      showToast('A atividade deve ser cadastrada com no mínimo 24h de antecedência.', 'error', 5000);
-      return;
-    }
-  } else {
-    // On edit: only enforce if the date or start time changed
-    const original = state.entries.find(e => e.id === state.editId);
-    if (original && (original.date !== date || original.start !== start)) {
-      if (!validate24h(date, start)) {
-        showToast('A nova data/hora deve ter no mínimo 24h de antecedência.', 'error', 5000);
-        return;
-      }
-    }
   }
 
   // WhatsApp basic validation
